@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.assignment6"
+    namespace = "com.example.assignment7"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.assignment6"
+        applicationId = "com.example.assignment7"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -56,4 +56,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }
