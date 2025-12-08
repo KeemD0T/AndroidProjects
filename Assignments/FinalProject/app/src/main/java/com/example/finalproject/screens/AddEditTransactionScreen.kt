@@ -70,6 +70,11 @@ fun AddEditTransactionScreen(
     val categories by financeViewModel.categories.collectAsState()
     var Categorytype by remember { mutableStateOf(TransactionType.EXPENSE) }
     var selectedCategory by remember { mutableStateOf<com.example.finalproject.data.Category?>(null) }
+    var descriptionError by remember { mutableStateOf<String?>(null) }
+    var amountError by remember { mutableStateOf<String?>(null) }
+
+
+
     val filteredCategories = remember(transactionType, categories) {
         val filtered = categories.filter { it.type == transactionType }
         // If the current selection is no longer in the valid list, reset it.
@@ -260,17 +265,39 @@ fun AddEditTransactionScreen(
             }
             OutlinedTextField(
                 value = description,
-                onValueChange = { description = it },
-                label = { Text("description") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    description = it
+                    descriptionError = null // Clear error when user types
+                },
+                label = { Text("Description") },
+                modifier = Modifier.fillMaxWidth(),
+                // --- ADD THESE ---
+                isError = descriptionError != null,
+                supportingText = {
+                    if (descriptionError != null) {
+                        Text(text = descriptionError!!, color = Color.Red)
+                    }
+                }
             )
+
 
             OutlinedTextField(
                 value = amount,
-                onValueChange = { amount = it },
-                label = { Text("amount") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    amount = it
+                    amountError = null // Clear error when user types
+                },
+                label = { Text("Amount") },
+                modifier = Modifier.fillMaxWidth(),
+                // --- ADD THESE ---
+                isError = amountError != null,
+                supportingText = {
+                    if (amountError != null) {
+                        Text(text = amountError!!, color = Color.Red)
+                    }
+                }
             )
+
 
             // TODO: Add a dropdown or radio buttons to select the transactionType
             if (showDatePicker) {
@@ -331,48 +358,60 @@ fun AddEditTransactionScreen(
             }
 
             // 4. Save Button with the logic to add the transaction
+            // ... after the Date Button
             Button(
                 onClick = {
-                    val amountValue = amount.toDoubleOrNull()
-                    if (amountValue != null && description.isNotBlank() && selectedCategory != null) {
+                    // --- VALIDATION LOGIC ---
+                    var isValid = true
+                    if (description.isBlank()) {
+                        descriptionError = "Description cannot be empty"
+                        isValid = false
+                    }
+                    if (amount.isBlank()) {
+                        amountError = "Amount cannot be empty"
+                        isValid = false
+                    }
+                    // You might also want to validate the category
+                    if (selectedCategory == null) {
+                        // You could show a Toast or a SnackBar for this
+                        // For simplicity, we'll skip the UI part for this error for now
+                        isValid = false
+                    }
 
-                        if (isEditMode) {
-                            // --- EDIT LOGIC ---
-                            val updatedTransaction = Transaction(
-                                id = transactionId, // CRITICAL: Use the original ID
-                                amount = amountValue,
+                    // --- SAVE LOGIC ---
+                    if (isValid) {
+                        val amountValue = amount.toDoubleOrNull()
+                        if (amountValue != null) {
+                            val transactionToSave = Transaction(
+                                id = if (isEditMode) transactionId else 0,
                                 description = description,
+                                amount = amountValue,
                                 type = transactionType,
-                                date = System.currentTimeMillis(), // Or keep original date
-                                categoryId = selectedCategory!!.id
+                                date = selectedDate,
+                                categoryId = selectedCategory!!.id // We know this is not null if isValid
                             )
-                            // You will need to create this function in your ViewModel
-                            financeViewModel.updateTransaction(updatedTransaction)
+
+                            if (isEditMode) {
+                                financeViewModel.updateTransaction(transactionToSave)
+                            } else {
+                                financeViewModel.addTransaction(transactionToSave)
+                            }
+                            // Navigate back to the previous screen
+                            navController.popBackStack()
                         } else {
-                            // --- ADD LOGIC ---
-                            val newTransaction = Transaction(
-                                amount = amountValue,
-                                description = description,
-                                type = transactionType,
-                                date = System.currentTimeMillis(),
-                                categoryId = selectedCategory!!.id
-                            )
-                            financeViewModel.addTransaction(newTransaction)
+                            amountError = "Please enter a valid number"
                         }
-
-                        // Navigate back after saving
-                        navController.popBackStack()
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp) // Consistent styling
             ) {
-                // Make the button text dynamic as well
-                Text(if (isEditMode) "SAVE CHANGES" else "SAVE TRANSACTION")
-
+                Text(text = "Save Transaction", fontSize = 16.sp)
             }
-        }
-    }
-}
+        } // End of Column
+    } // End of Scaffold content lambda
+} // End of Composable
+
 fun formatDate(timestamp: Long): String {
     val sdf = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
     return sdf.format(java.util.Date(timestamp))
