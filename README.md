@@ -18,6 +18,6 @@ Tracks income and expenses using a local database.
 - MVVM architecture
 
 **Location**
-`/FinalProject/`
+`Assignments/FinalProject/`
 
 ---
