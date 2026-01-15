@@ -15,7 +15,6 @@ Tracks income and expenses using a local database.
 **Tech**
 - Kotlin
 - Android Studio
-- SQLite / Room
 - MVVM architecture
 
 **Location**
